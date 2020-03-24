@@ -4,7 +4,7 @@
 Plugin Name: WPU Simple PWA
 Plugin URI: https://github.com/WordPressUtilities/WPUSimplePWA
 Description: Turn your website into a simple PWA
-Version: 0.1.0
+Version: 0.2.0
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -12,10 +12,12 @@ License URI: http://opensource.org/licenses/MIT
 */
 
 class WPUSimplePWA {
-    private $plugin_version = '0.1.0';
+    private $plugin_version = '0.2.0';
     private $settings = array(
         'main_color' => '#336699',
-        'default_icon' => false
+        'default_icon' => false,
+        'default_icon_m' => false,
+        'default_splash' => false
     );
 
     public function __construct() {
@@ -23,10 +25,13 @@ class WPUSimplePWA {
     }
 
     public function plugins_loaded() {
-        $this->settings['default_icon'] = plugins_url('assets/icon-192x192.png', __FILE__);
+        $this->settings['default_icon'] = plugins_url('assets/icons/icon-192x192.png', __FILE__);
+        $this->settings['default_icon_m'] = plugins_url('assets/icons/icon-256x256.png', __FILE__);
+        $this->settings['default_splash'] = plugins_url('assets/icons/icon-512x512.png', __FILE__);
+        $this->settings = apply_filters('wpusimplepwa_settings', $this->settings);
         add_action('wp_head', array(&$this, 'wp_head'));
         add_filter('query_vars', array(&$this, 'query_vars'));
-        add_action('template_redirect', array(&$this, 'template_redirect'));
+        add_action('template_redirect', array(&$this, 'router'));
     }
 
     public function wp_head() {
@@ -36,6 +41,10 @@ class WPUSimplePWA {
         echo '<meta name="msapplication-navbutton-color" content="' . $this->settings['main_color'] . '" />';
         echo '<link rel="apple-touch-icon" href="' . $this->settings['default_icon'] . '" />';
         echo '<link rel="manifest" href="' . site_url() . '/?wpupwa_mode=manifest">';
+        echo '<script>';
+        echo 'var serviceWorkerUrl = "' . site_url() . '/?wpupwa_mode=worker";';
+        include dirname(__FILE__) . '/assets/main.js';
+        echo '</script>';
     }
 
     public function query_vars($query_vars) {
@@ -43,29 +52,54 @@ class WPUSimplePWA {
         return $query_vars;
     }
 
-    public function template_redirect() {
+    public function router() {
         if (!isset($_GET['wpupwa_mode'])) {
             return;
         }
-        if ($_GET['wpupwa_mode'] == 'manifest') {
-            $manifest = array(
-                "name" => get_bloginfo('name'),
-                "short_name" => get_bloginfo('name'),
-                "start_url" => ".",
-                "display" => "standalone",
-                "theme_color" => $this->settings['main_color'],
-                "background_color" => "#FFF",
-                "icons" => array(
-                    array(
-                        "src" => $this->settings['default_icon'],
-                        "sizes" => "192x192",
-                        "type" => "image/png"
-                    )
-                )
-            );
-            echo json_encode($manifest);
-            die;
+        if ($_GET['wpupwa_mode'] == 'worker') {
+            $this->trigger_worker();
         }
+        if ($_GET['wpupwa_mode'] == 'manifest') {
+            $this->trigger_manifest();
+        }
+    }
+
+    public function trigger_worker() {
+        header('content-type:application/x-javascript');
+        include dirname(__FILE__) . '/assets/service-worker.js';
+        die;
+    }
+
+    public function trigger_manifest() {
+        $manifest = array(
+            "name" => get_bloginfo('name'),
+            "short_name" => get_bloginfo('name'),
+            "start_url" => ".",
+            "display" => "standalone",
+            "theme_color" => $this->settings['main_color'],
+            "background_color" => "#FFF",
+            "icons" => array(
+                array(
+                    "src" => $this->settings['default_icon'],
+                    "sizes" => "192x192",
+                    "type" => "image/png"
+                ),
+                array(
+                    "src" => $this->settings['default_icon_m'],
+                    "sizes" => "256x256",
+                    "type" => "image/png"
+                ),
+                array(
+                    "src" => $this->settings['default_splash'],
+                    "sizes" => "512x512",
+                    "type" => "image/png"
+                )
+            )
+        );
+
+        header('content-type:application/json');
+        echo json_encode($manifest);
+        die;
     }
 }
 
