@@ -4,7 +4,7 @@
 Plugin Name: WPU Simple PWA
 Plugin URI: https://github.com/WordPressUtilities/WPUSimplePWA
 Description: Turn your website into a simple PWA
-Version: 0.2.0
+Version: 0.3.0
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -12,9 +12,10 @@ License URI: http://opensource.org/licenses/MIT
 */
 
 class WPUSimplePWA {
-    private $plugin_version = '0.2.0';
+    private $plugin_version = '0.3.0';
     private $settings = array(
         'main_color' => '#336699',
+        'background_color' => '#336699',
         'default_icon' => false,
         'default_icon_m' => false,
         'default_splash' => false
@@ -65,7 +66,13 @@ class WPUSimplePWA {
     }
 
     public function trigger_worker() {
+
+        $files = apply_filters('wpusimplepwa_worker_files', array('/'));
+        $cachename = apply_filters('wpusimplepwa_worker_cachename', 'wpusimplepwa' . $this->plugin_version);
+
         header('content-type:application/x-javascript');
+        echo 'var cacheName = "' . esc_attr($cachename) . '";';
+        echo 'var appShellFiles = ' . json_encode($files) . ';';
         include dirname(__FILE__) . '/assets/service-worker.js';
         die;
     }
@@ -77,7 +84,7 @@ class WPUSimplePWA {
             "start_url" => ".",
             "display" => "standalone",
             "theme_color" => $this->settings['main_color'],
-            "background_color" => "#FFF",
+            "background_color" => $this->settings['background_color'],
             "icons" => array(
                 array(
                     "src" => $this->settings['default_icon'],
