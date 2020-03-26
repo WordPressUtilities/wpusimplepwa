@@ -124,7 +124,7 @@ class WPUSimplePWA {
 
         $manifest = apply_filters('wpusimplepwa_manifest', $manifest);
 
-        header('content-type:application/json');
+        header('content-type:application/manifest+json');
         echo json_encode($manifest);
         die;
     }
