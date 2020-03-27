@@ -4,7 +4,7 @@
 Plugin Name: WPU Simple PWA
 Plugin URI: https://github.com/WordPressUtilities/WPUSimplePWA
 Description: Turn your website into a simple PWA
-Version: 0.3.0
+Version: 0.4.0
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -12,7 +12,7 @@ License URI: http://opensource.org/licenses/MIT
 */
 
 class WPUSimplePWA {
-    private $plugin_version = '0.3.0';
+    private $plugin_version = '0.4.0';
     private $settings = array(
         'main_color' => '#336699',
         'background_color' => '#336699',
@@ -72,6 +72,7 @@ class WPUSimplePWA {
 
         header('content-type:application/x-javascript');
         echo 'var cacheName = "' . esc_attr($cachename) . '";';
+        echo 'var appHost = "' . esc_attr(parse_url(site_url(), PHP_URL_HOST)) . '";';
         echo 'var appShellFiles = ' . json_encode($files) . ';';
         include dirname(__FILE__) . '/assets/service-worker.js';
         die;
@@ -103,6 +104,25 @@ class WPUSimplePWA {
                 )
             )
         );
+
+        $site_icon = get_option('site_icon');
+        if (is_numeric($site_icon)) {
+            $manifest['icons'] = array();
+
+            $data = wp_get_attachment_metadata($site_icon);
+            $upload_dir = wp_upload_dir();
+            $dirname = dirname($data['file']);
+            $base_url = trailingslashit($upload_dir['baseurl']) . $dirname . '/';
+            foreach ($data['sizes'] as $size) {
+                $manifest['icons'][] = array(
+                    "src" => $base_url . $size['file'],
+                    "sizes" => $size['width'].'x'.$size['height'],
+                    "type" => $size['mime-type']
+                );
+            }
+        }
+
+        $manifest = apply_filters('wpusimplepwa_manifest', $manifest);
 
         header('content-type:application/json');
         echo json_encode($manifest);
