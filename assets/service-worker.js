@@ -11,6 +11,26 @@ self.addEventListener('install', function(e) {
 });
 
 /* ----------------------------------------------------------
+  Activate
+---------------------------------------------------------- */
+
+/* Keep only current cache version */
+self.addEventListener('activate', function(event) {
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames.filter(function(newCacheName) {
+                    console.log(newCacheName != cacheName);
+                    return newCacheName != cacheName;
+                }).map(function(newCacheName) {
+                    return caches.delete(newCacheName);
+                })
+            );
+        })
+    );
+});
+
+/* ----------------------------------------------------------
   Fetch action
 ---------------------------------------------------------- */
 

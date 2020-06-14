@@ -4,7 +4,7 @@
 Plugin Name: WPU Simple PWA
 Plugin URI: https://github.com/WordPressUtilities/WPUSimplePWA
 Description: Turn your website into a simple PWA
-Version: 0.4.0
+Version: 0.5.0
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -12,7 +12,7 @@ License URI: http://opensource.org/licenses/MIT
 */
 
 class WPUSimplePWA {
-    private $plugin_version = '0.4.0';
+    private $plugin_version = '0.5.0';
     private $settings = array(
         'main_color' => '#336699',
         'background_color' => '#336699',
